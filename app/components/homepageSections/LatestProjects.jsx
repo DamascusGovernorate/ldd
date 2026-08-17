@@ -1,0 +1,46 @@
+"use client";
+import Image from "next/image";
+import Reveal from "../ui/Reveal";
+import Button from "../ui/Button";
+import { projects } from "../../lib/projects";
+
+export default function LatestProjects() {
+  return (
+    <section className="relative bg-teal-deep py-20 md:py-28 overflow-hidden">
+      <div className="pattern-khatam bg-[length:64px_64px] absolute inset-0 opacity-[0.06]" />
+      <div className="relative max-w-7xl mx-auto px-6 md:px-12">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-14 gap-6">
+          <div>
+            <span className="font-display text-gold-soft text-2xl tracking-[0.3em]">أحدث المشاريع</span>
+            <div className="w-16 h-[2px] bg-gold my-4" />
+            <h2 className="font-display text-3xl md:text-4xl text-white">مشاريعنا الحالية</h2>
+          </div>
+          <Button href="/projects"  variant="outlineLight" >جميع المشاريع</Button>
+        </div>
+
+        {projects.map((p, i) => (
+          <Reveal key={p.slug} delay={i * 100}>
+            <div className="group grid md:grid-cols-2 border border-white/10 hover:border-gold-soft/50 transition-colors duration-500 bg-ink/20">
+              <div className="relative aspect-[16/10] overflow-hidden">
+                <Image
+                  src={p.image}
+                  alt={p.name}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+                <span className="absolute top-4 start-4 px-3 py-1 text-xs font-medium bg-gold text-ink">
+                  {p.status}
+                </span>
+              </div>
+              <div className="p-8 md:p-10 flex flex-col justify-center">
+                <span className="text-gold-soft text-sm tracking-widest">{p.category}</span>
+                <h3 className="font-display text-2xl md:text-3xl text-white mt-3">{p.name}</h3>
+                <p className="mt-4 text-white/70 leading-loose">{p.description}</p>
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}

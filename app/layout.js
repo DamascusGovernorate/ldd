@@ -1,18 +1,8 @@
-// app/layout.js
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Logo from "./components/Logo";
 import Script from "next/script";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 // ---------- SEO METADATA ----------
 export const metadata = {
@@ -34,15 +24,9 @@ export const metadata = {
   authors: [{ name: "مديرية التنمية المحلية – محافظة دمشق" }],
   creator: "مديرية التنمية المحلية – محافظة دمشق",
   publisher: "مديرية التنمية المحلية – محافظة دمشق",
-  formatDetection: {
-    telephone: false,
-    address: false,
-    email: false,
-  },
+  formatDetection: { telephone: false, address: false, email: false },
   metadataBase: new URL("https://www.ldd.sy"),
-  alternates: {
-    canonical: "/",
-  },
+  alternates: { canonical: "/" },
   openGraph: {
     title: "مديرية التنمية المحلية – محافظة دمشق",
     description:
@@ -79,24 +63,22 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
+  icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
 };
 
 // ---------- LAYOUT ----------
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <Logo />
+    <html lang="ar" dir="rtl" className="h-full antialiased">
+      <body className="min-h-full flex flex-col bg-stone text-ink font-body">
+        <header className="fixed top-0 inset-x-0 z-50 flex flex-col">
+          <Logo />
+          <Navbar />
+        </header>
 
-        {/* ✅ JSON‑LD Structured Data – now correctly inside the component */}
+        {/* Spacer to prevent content from hiding under the fixed header */}
+        <div className="h-[calc(4rem+3.5rem)]" />
+
         <Script
           id="structured-data"
           type="application/ld+json"
@@ -107,8 +89,7 @@ export default function RootLayout({ children }) {
               name: "مديرية التنمية المحلية – محافظة دمشق",
               url: "https://www.ldd.sy",
               logo: "https://www.ldd.sy/logo.png",
-              description:
-                "الموقع الرسمي لمديرية التنمية المحلية في محافظة دمشق.",
+              description: "الموقع الرسمي لمديرية التنمية المحلية في محافظة دمشق.",
               address: {
                 "@type": "PostalAddress",
                 addressLocality: "دمشق",
@@ -117,8 +98,8 @@ export default function RootLayout({ children }) {
             }),
           }}
         />
-
         {children}
+        <Footer />
       </body>
     </html>
   );
