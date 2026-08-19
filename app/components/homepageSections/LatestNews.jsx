@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Reveal from "../ui/Reveal";
 import Button from "../ui/Button";
-import { news } from "../../lib/news";
+import { news } from "../../../lib/news";
 
 const formatDate = (d) =>
   new Date(d).toLocaleDateString("ar-SY", { year: "numeric", month: "long", day: "numeric" });

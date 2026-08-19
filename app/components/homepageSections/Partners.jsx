@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { partners } from "../../lib/partners";
+import { partners } from "../../../lib/partners";
 
 export default function Partners() {
   const track = [...partners, ...partners];

@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Reveal from "../ui/Reveal";
 import Button from "../ui/Button";
-import { initiatives } from "../../lib/initiatives";
+import { initiatives } from "../../../lib/initiatives";
 
 export default function LatestInitiatives() {
   return (
