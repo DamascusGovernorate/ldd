@@ -45,11 +45,13 @@ export default async function LatestProjects() {
                     {STATUS_LABELS[p.status]}
                   </span>
                 </div>
-                <div className="p-8 md:p-10 flex flex-col justify-center">
-                  <h3 className="font-display text-2xl md:text-3xl text-white group-hover:text-gold-soft transition-colors">{p.name}</h3>
-                  <p className="mt-4 text-white/70 leading-loose line-clamp-4">{p.summary}</p>
-                  <span className="mt-6 text-sm text-gold-soft">عرض التفاصيل ←</span>
-                </div>
+<div className="p-8 md:p-10 flex flex-col justify-center">
+  <h3 className="font-display text-2xl md:text-3xl text-white group-hover:text-gold-soft transition-colors">{p.name}</h3>
+  <p className="mt-4 text-white/70 leading-loose line-clamp-4">{p.summary}</p>
+  <span className="mt-6 text-sm text-gold-soft">
+    {p.slug === "xp-tahadi" ? "العب الآن ←" : "عرض التفاصيل ←"}
+  </span>
+</div>
               </a>
             </Reveal>
           ))}

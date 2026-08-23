@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { DAMASCUS_NEIGHBORHOODS } from "@/lib/neighborhoods";
 
 const DEGREE_LEVELS = [
   { value: "primary", label: "الشهادة الابتدائية" },
@@ -13,6 +15,10 @@ const DEGREE_LEVELS = [
 const inputClasses = "w-full px-4 py-3 bg-stone border border-ink/15 focus:outline-none focus:border-gold transition-colors placeholder:text-ink/40";
 
 export default function AccountForm({ initialData }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
+
   const [form, setForm] = useState({
     ...initialData,
     degrees: initialData.degrees.length ? initialData.degrees : [{ level: "", specialization: "" }],
@@ -64,6 +70,9 @@ export default function AccountForm({ initialData }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setStatus("success");
+      if (data.completed && next) {
+        setTimeout(() => router.push(next), 900);
+      }
     } catch (err) {
       setError(err.message);
       setStatus("error");
@@ -89,6 +98,14 @@ export default function AccountForm({ initialData }) {
             <option value="female">أنثى</option>
           </select>
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm text-ink/70 mb-2">الحي السكني</label>
+        <select value={form.neighborhood || ""} onChange={(e) => setForm((f) => ({ ...f, neighborhood: e.target.value }))} className={inputClasses}>
+          <option value="">اختر الحي</option>
+          {DAMASCUS_NEIGHBORHOODS.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
       </div>
 
       <div>
@@ -130,7 +147,9 @@ export default function AccountForm({ initialData }) {
       </div>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      {status === "success" && <p className="text-teal text-sm">تم حفظ معلوماتك بنجاح</p>}
+      {status === "success" && (
+        <p className="text-teal text-sm">تم حفظ معلوماتك بنجاح{next ? " — جارِ تحويلك..." : ""}</p>
+      )}
 
       <button type="submit" disabled={status === "loading"} className="px-8 py-3.5 bg-teal text-white font-medium hover:bg-teal-deep transition-colors duration-300 disabled:opacity-60">
         {status === "loading" ? "جارِ الحفظ..." : "حفظ المعلومات"}

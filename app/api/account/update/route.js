@@ -7,7 +7,7 @@ export async function PUT(req) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
 
-  const { mobilePhone, age, gender, degrees, certificateImage, idImage } = await req.json();
+  const { mobilePhone, age, gender, neighborhood, degrees, certificateImage, idImage } = await req.json();
   if (degrees && degrees.length > 3) {
     return NextResponse.json({ error: "الحد الأقصى 3 شهادات" }, { status: 400 });
   }
@@ -22,6 +22,7 @@ export async function PUT(req) {
         "profile.mobilePhone": mobilePhone,
         "profile.age": age,
         "profile.gender": gender,
+        "profile.neighborhood": neighborhood,
         "profile.degrees": degrees || [],
         "profile.certificateImage": certificateImage,
         "profile.idImage": idImage,

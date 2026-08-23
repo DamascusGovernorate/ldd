@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { DAMASCUS_NEIGHBORHOODS } from "@/lib/neighborhoods";
 
 const DegreeSchema = new mongoose.Schema(
   {
@@ -18,10 +19,12 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     role: { type: String, enum: ["admin", "user", "news_reporter"], default: "user" },
     emailVerified: { type: Boolean, default: false },
+    xpPoints: { type: Number, default: 0 },
     profile: {
       mobilePhone: String,
       age: Number,
       gender: { type: String, enum: ["male", "female"] },
+      neighborhood: { type: String, enum: DAMASCUS_NEIGHBORHOODS },
       degrees: { type: [DegreeSchema], validate: (v) => v.length <= 3 },
       certificateImage: String,
       idImage: String,

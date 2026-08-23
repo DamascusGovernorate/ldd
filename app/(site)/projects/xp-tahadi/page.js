@@ -1,7 +1,16 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getSession } from "@/lib/auth";
+import connectDB from "@/lib/db";
+import Project from "@/models/Project";
+import Mission from "@/models/Mission";
+import User from "@/models/User";
 import Reveal from "@/app/components/ui/Reveal";
 import Button from "@/app/components/ui/Button";
+import ApplyPrompt from "./ApplyPrompt";
+import GameApp from "./GameApp";
+import RoleSwitcher from "./RoleSwitcher";
 
 export const metadata = {
   title: "تحدي XP",
@@ -23,35 +32,23 @@ const highlights = [
   { label: "التمويل", value: "لأفضل الأفكار" },
 ];
 
-export default function XpTahadiPage() {
+function MarketingContent() {
   return (
     <div className="bg-stone">
-      {/* Hero */}
       <section className="relative min-h-[70vh] flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <Image
-            src="/projects/xp-tahadi.jpg"
-            alt="تحدي XP"
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
+          <Image src="/projects/xp-tahadi.jpg" alt="تحدي XP" fill className="object-cover" priority sizes="100vw" />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-ink/20" />
         </div>
         <div className="pattern-khatam bg-[length:64px_64px] absolute inset-0 opacity-[0.1] mix-blend-overlay" />
-
         <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-16 md:pb-24">
           <span className="font-display text-gold-soft text-sm tracking-[0.3em]">تمكين اقتصادي وريادة أعمال</span>
           <div className="w-16 h-[2px] bg-gold my-5" />
           <h1 className="font-display text-5xl md:text-7xl text-white leading-tight">تحدي XP</h1>
-          <p className="mt-6 text-white/80 text-lg max-w-xl leading-loose">
-            اكتشاف ودعم المواهب الريادية الشابة في محافظة دمشق
-          </p>
+          <p className="mt-6 text-white/80 text-lg max-w-xl leading-loose">اكتشاف ودعم المواهب الريادية الشابة في محافظة دمشق</p>
         </div>
       </section>
 
-      {/* Stats strip */}
       <section className="bg-teal-deep py-8">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4">
           {highlights.map((h, i) => (
@@ -63,7 +60,6 @@ export default function XpTahadiPage() {
         </div>
       </section>
 
-      {/* About */}
       <section className="max-w-4xl mx-auto px-6 py-16 md:py-24">
         <Reveal>
           <span className="font-display text-gold text-sm tracking-[0.3em]">عن التحدي</span>
@@ -78,7 +74,6 @@ export default function XpTahadiPage() {
         </Reveal>
       </section>
 
-      {/* Timeline */}
       <section className="bg-white/40 py-16 md:py-24">
         <div className="max-w-5xl mx-auto px-6">
           <Reveal className="text-center mb-14">
@@ -86,7 +81,6 @@ export default function XpTahadiPage() {
             <div className="w-16 h-[2px] bg-gold my-4 mx-auto" />
             <h2 className="font-display text-3xl text-ink">مراحل التحدي</h2>
           </Reveal>
-
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {timeline.map((t, i) => (
               <Reveal key={t.step} delay={i * 100}>
@@ -101,7 +95,6 @@ export default function XpTahadiPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="max-w-4xl mx-auto px-6 py-16 md:py-24">
         <Reveal className="p-8 md:p-12 bg-teal-deep relative overflow-hidden text-center">
           <div className="pattern-khatam bg-[length:64px_64px] absolute inset-0 opacity-[0.08]" />
@@ -120,5 +113,99 @@ export default function XpTahadiPage() {
         </Reveal>
       </section>
     </div>
+  );
+}
+
+export default async function XpTahadiPage({ searchParams }) {
+  const session = await getSession();
+  const params = await searchParams;
+  const isAdmin = session?.role === "admin";
+  // Only a real admin's session can ever set this — never trust a client-side role.
+  const viewAs = isAdmin ? params?.viewAs : undefined;
+
+  const switcher = isAdmin ? (
+    <Suspense fallback={null}>
+      <RoleSwitcher />
+    </Suspense>
+  ) : null;
+
+  if (!session) return <MarketingContent />;
+
+  if (viewAs === "guest") {
+    return (
+      <>
+        <MarketingContent />
+        {switcher}
+      </>
+    );
+  }
+
+  await connectDB();
+  const project = await Project.findOne({ slug: "xp-tahadi" }).lean();
+  if (!project) {
+    return (
+      <>
+        <MarketingContent />
+        {switcher}
+      </>
+    );
+  }
+
+  const realIsMember = project.volunteers.some((v) => v.toString() === session.uid);
+
+  // Site admins always get the full game view by default (they can manage
+  // everything from the dashboard regardless of project membership) unless
+  // they explicitly ask to preview the "not accepted yet" state.
+  const isMember =
+    viewAs === "applicant" ? false :
+    viewAs === "contestant" || viewAs === "manager" ? true :
+    isAdmin ? true :
+    realIsMember;
+
+  const preview = Boolean(viewAs);
+
+  if (!isMember) {
+    return (
+      <>
+        <ApplyPrompt projectId={project._id.toString()} preview={preview} />
+        {switcher}
+      </>
+    );
+  }
+
+  const [missions, leaderboardUsers] = await Promise.all([
+    Mission.find({ project: project._id }).sort({ createdAt: -1 }).lean(),
+    User.find({ _id: { $in: project.volunteers } }).select("fullName xpPoints profile.neighborhood profile.avatar").sort({ xpPoints: -1 }).lean(),
+  ]);
+
+  const neighborhoodTotals = {};
+  leaderboardUsers.forEach((u) => {
+    const n = u.profile?.neighborhood;
+    if (!n) return;
+    neighborhoodTotals[n] = (neighborhoodTotals[n] || 0) + (u.xpPoints || 0);
+  });
+
+  const data = {
+    currentUserId: session.uid,
+    missions: JSON.parse(JSON.stringify(missions)),
+    users: leaderboardUsers.map((u) => ({
+      id: u._id.toString(),
+      name: u.fullName,
+      xpPoints: u.xpPoints || 0,
+      neighborhood: u.profile?.neighborhood || null,
+    })),
+    neighborhoods: Object.entries(neighborhoodTotals)
+      .map(([neighborhood, xpPoints]) => ({ neighborhood, xpPoints }))
+      .sort((a, b) => b.xpPoints - a.xpPoints),
+    preview,
+    previewRole: viewAs,
+    projectId: project._id.toString(),
+  };
+
+  return (
+    <>
+      <GameApp {...data} />
+      {switcher}
+    </>
   );
 }

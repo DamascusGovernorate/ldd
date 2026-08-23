@@ -12,6 +12,7 @@ export default async function AccountPage() {
     mobilePhone: user.profile?.mobilePhone || "",
     age: user.profile?.age || "",
     gender: user.profile?.gender || "",
+    neighborhood: user.profile?.neighborhood || "",
     degrees: user.profile?.degrees || [],
     certificateImage: user.profile?.certificateImage || "",
     idImage: user.profile?.idImage || "",

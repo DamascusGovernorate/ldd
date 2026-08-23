@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Project from "@/models/Project";
@@ -19,14 +20,16 @@ export default async function ProjectDetailPage({ params }) {
   const users = await User.find().select("fullName email").sort({ fullName: 1 }).lean();
   const plainUsers = users.map((u) => ({ id: u._id.toString(), fullName: u.fullName, email: u.email }));
 
-  // Fully serialize before passing to the client component —
-  // .lean() removes Mongoose methods but ObjectId/Date fields
-  // (including inside populated sub-documents) still aren't plain JSON.
   const plainProject = JSON.parse(JSON.stringify(project));
 
   return (
     <div>
-      <h1 className="font-display text-2xl md:text-3xl text-ink mb-8">{project.name}</h1>
+      <h1 className="font-display text-2xl md:text-3xl text-ink mb-4">{project.name}</h1>
+      {(session.role === "admin" || isOwner) && (
+        <Link href={`/dashboard/projects/${id}/missions`} className="inline-block mb-8 text-sm text-teal hover:text-gold transition-colors">
+          إدارة مهمات الخريطة ←
+        </Link>
+      )}
       {session.role === "admin" ? (
         <ProjectForm users={plainUsers} initial={plainProject} projectId={id} />
       ) : (
