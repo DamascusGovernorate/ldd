@@ -138,13 +138,13 @@ function MarketingContent({ signup = false, apply = null }) {
 
         {/* ---------- hero ---------- */}
         <section className="w-full px-3 sm:px-4 pt-6 pb-3 md:pt-10">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
-            <Reveal className="flex flex-col items-center md:items-start gap-5">
-              <img src={ASSETS.logo} alt="تحدي XP — العبها تنمية" className="w-full max-w-[360px] h-auto" />
+          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center" >
+            <Reveal className="flex flex-col items-center gap-5" >
+              <img src={ASSETS.logo} alt="تحدي XP — العبها تنمية" className="w-full max-w-[360px] h-auto" style={{ margin: "auto" }} />
 
              
 
-              {signup && <SignupButton />}
+              {signup && <SignupButton  />}
             </Reveal>
 
             <Reveal delay={120}>
