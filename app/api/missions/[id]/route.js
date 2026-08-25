@@ -5,7 +5,6 @@ import Mission from "@/models/Mission";
 import User from "@/models/User";
 import { notifyUser } from "@/lib/notify";
 import {
-  getXpContext,
   canTouchNeighborhood,
   normalizeStatus,
   isVisibleToVolunteers,
