@@ -173,33 +173,96 @@ export default async function XpTahadiPage({ searchParams }) {
     );
   }
 
-  const [missions, leaderboardUsers] = await Promise.all([
+  const [missionDocs, volunteerDocs, currentUser] = await Promise.all([
     Mission.find({ project: project._id }).sort({ createdAt: -1 }).lean(),
-    User.find({ _id: { $in: project.volunteers } }).select("fullName xpPoints profile.neighborhood profile.avatar").sort({ xpPoints: -1 }).lean(),
+    User.find({ _id: { $in: project.volunteers } })
+      .select("fullName xpPoints profile.neighborhood profile.avatar")
+      .sort({ xpPoints: -1 })
+      .lean(),
+    User.findById(session.uid).select("fullName xpPoints profile.neighborhood profile.avatar").lean(),
   ]);
 
+  const publicUser = (doc) => ({
+    id: doc._id.toString(),
+    name: doc.fullName,
+    xpPoints: doc.xpPoints || 0,
+    neighborhood: doc.profile?.neighborhood || null,
+    avatar: doc.profile?.avatar || null,
+  });
+
+  const users = volunteerDocs.map(publicUser);
+  const byId = new Map(users.map((u) => [u.id, u]));
+
+  // Counts are aggregated on the server so the client never receives the
+  // full applicant list of every mission — only the signed-in user's own
+  // state plus the roster of people already accepted.
+  const missions = missionDocs.map((m) => {
+    const applicants = m.applicants || [];
+    const participation = m.participation || [];
+    const mine = applicants.find((a) => a.user?.toString() === session.uid);
+    const myParticipation = participation.find((p) => p.user?.toString() === session.uid);
+
+    return {
+      id: m._id.toString(),
+      title: m.title,
+      summary: m.summary || "",
+      objectives: m.objectives || [],
+      icon: m.icon || null,
+      images: m.images || [],
+      neighborhood: m.neighborhood,
+      googleMapsUrl: m.googleMapsUrl || null,
+      xpReward: m.xpReward || 0,
+      status: m.status,
+      createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : null,
+
+      applicantCount: applicants.length,
+      acceptedCount: applicants.filter((a) => a.status === "accepted").length,
+      pendingCount: applicants.filter((a) => a.status === "pending").length,
+      completedCount: participation.filter((p) => p.completed).length,
+
+      participants: applicants
+        .filter((a) => a.status === "accepted")
+        .map((a) => byId.get(a.user?.toString()))
+        .filter(Boolean),
+
+      myStatus: mine?.status || "open",
+      myCompleted: Boolean(myParticipation?.completed),
+    };
+  });
+
   const neighborhoodTotals = {};
-  leaderboardUsers.forEach((u) => {
+  volunteerDocs.forEach((u) => {
     const n = u.profile?.neighborhood;
     if (!n) return;
     neighborhoodTotals[n] = (neighborhoodTotals[n] || 0) + (u.xpPoints || 0);
   });
+  missions.forEach((m) => {
+    if (!m.neighborhood) return;
+    neighborhoodTotals[m.neighborhood] = neighborhoodTotals[m.neighborhood] || 0;
+  });
+
+  const neighborhoods = Object.entries(neighborhoodTotals)
+    .map(([neighborhood, xpPoints]) => ({
+      neighborhood,
+      xpPoints,
+      missions: missions.filter((m) => m.neighborhood === neighborhood).length,
+      members: users.filter((u) => u.neighborhood === neighborhood).length,
+    }))
+    .sort((a, b) => b.xpPoints - a.xpPoints);
 
   const data = {
     currentUserId: session.uid,
-    missions: JSON.parse(JSON.stringify(missions)),
-    users: leaderboardUsers.map((u) => ({
-      id: u._id.toString(),
-      name: u.fullName,
-      xpPoints: u.xpPoints || 0,
-      neighborhood: u.profile?.neighborhood || null,
-    })),
-    neighborhoods: Object.entries(neighborhoodTotals)
-      .map(([neighborhood, xpPoints]) => ({ neighborhood, xpPoints }))
-      .sort((a, b) => b.xpPoints - a.xpPoints),
+    me: currentUser ? publicUser(currentUser) : null,
+    missions,
+    users,
+    neighborhoods,
     preview,
     previewRole: viewAs,
     projectId: project._id.toString(),
+    canManage:
+      isAdmin ||
+      project.owner.toString() === session.uid ||
+      (project.admins || []).some((a) => a.toString() === session.uid),
   };
 
   return (

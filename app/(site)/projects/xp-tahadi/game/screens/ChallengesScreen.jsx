@@ -1,0 +1,181 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useGame } from "../context";
+import { ChipRow, EmptyState, GameCard, GameHeader, IconTile, Pill, ProgressBar, SegmentedTabs, XPBadge } from "../ui";
+import { IconCheck } from "../icons";
+import { categoryStyle, missionProgress, myState, objectiveTasks, STATUS_LABELS } from "../lib";
+
+const VIEWS = [
+  { id: "main", label: "التحديات الرئيسية" },
+  { id: "sub", label: "المهام الفرعية" },
+];
+
+/* Filters over real mission state — nothing invented. */
+const MISSION_FILTERS = [
+  { id: "all", label: "الكل" },
+  { id: "open", label: "متاحة" },
+  { id: "mine", label: "مهامي" },
+  { id: "closed", label: "مكتملة" },
+];
+
+const STATE_TONE = {
+  completed: "var(--xpg-green)",
+  accepted: "var(--xpg-sky)",
+  pending: "var(--xpg-gold-deep)",
+  rejected: "var(--xpg-red)",
+  closed: "var(--xpg-gray)",
+};
+
+function MissionIcon({ mission, size = 62 }) {
+  const style = categoryStyle(mission);
+  if (mission.icon) {
+    return (
+      <span
+        className="xpg-tile"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: 18,
+          backgroundImage: `url(${mission.icon})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+    );
+  }
+  return <IconTile icon={style.icon} color={style.color} size={size} radius={18} iconSize={Math.round(size * 0.55)} />;
+}
+
+function ChallengeCard({ mission, onOpen }) {
+  const style = categoryStyle(mission);
+  const { joined, applied, done, percent, mode } = missionProgress(mission);
+  const state = myState(mission);
+
+  return (
+    <GameCard
+      as="button"
+      onClick={() => onOpen(mission)}
+      className="xpg-press"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        width: "100%",
+        padding: 12,
+        textAlign: "start",
+        cursor: "pointer",
+        font: "inherit",
+      }}
+    >
+      <MissionIcon mission={mission} />
+
+      <div style={{ flex: 1, minWidth: 0 }} dir="rtl">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 6, justifyContent: "space-between" }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 900, lineHeight: 1.35 }}>{mission.title}</p>
+          {state !== "open" && (
+            <Pill color={STATE_TONE[state]} filled={false} style={{ flex: "none" }}>
+              {state === "completed" && <IconCheck size={11} />}
+              {STATUS_LABELS[state]}
+            </Pill>
+          )}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0 5px" }}>
+          <div style={{ flex: 1 }}>
+            <ProgressBar value={percent} color={style.color} height={11} />
+          </div>
+          <span className="xpg-num" style={{ fontSize: 14, fontWeight: 900 }}>
+            {percent}%
+          </span>
+        </div>
+
+        <p className="xpg-num" style={{ margin: 0, fontSize: 11.5, fontWeight: 700, color: "var(--xpg-muted)" }}>
+          {mode === "done"
+            ? `${done} أنجزوا من ${joined} مشارك`
+            : `${joined} مقبول من ${applied} طلب · ${mission.neighborhood}`}
+        </p>
+      </div>
+    </GameCard>
+  );
+}
+
+function ObjectiveRow({ task, onOpen }) {
+  const style = categoryStyle(task.mission);
+  return (
+    <GameCard
+      as="button"
+      onClick={() => onOpen(task.mission)}
+      className="xpg-press"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 11,
+        width: "100%",
+        padding: 11,
+        cursor: "pointer",
+        font: "inherit",
+        textAlign: "start",
+      }}
+    >
+      <MissionIcon mission={task.mission} size={48} />
+      <div style={{ flex: 1, minWidth: 0 }} dir="rtl">
+        <p style={{ margin: 0, fontSize: 14.5, fontWeight: 900 }}>{task.text}</p>
+        <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--xpg-muted)", fontWeight: 600 }}>
+          {task.mission.title} · {task.mission.neighborhood}
+        </p>
+      </div>
+      <XPBadge amount={task.xp} color={style.color} />
+    </GameCard>
+  );
+}
+
+export default function ChallengesScreen() {
+  const { missions, push, setTab } = useGame();
+  const [view, setView] = useState("main");
+  const [filter, setFilter] = useState("all");
+
+  const filtered = useMemo(() => {
+    if (filter === "open") return missions.filter((m) => m.status === "open" && m.myStatus === "open");
+    if (filter === "mine") return missions.filter((m) => m.myStatus === "accepted" || m.myStatus === "pending");
+    if (filter === "closed") return missions.filter((m) => m.status === "closed");
+    return missions;
+  }, [missions, filter]);
+
+  const tasks = useMemo(() => objectiveTasks(filtered), [filtered]);
+  const open = (mission) => push({ screen: "mission", id: mission.id });
+
+  return (
+    <div className="xpg-bluebg xpg-enter" style={{ minHeight: "100%", paddingBottom: 18 }}>
+      <GameHeader title={view === "main" ? "التحديات" : "المهام الفرعية"} onBack={() => setTab("home")} />
+
+      <div className="xpg-page">
+        <SegmentedTabs items={VIEWS} value={view} onChange={setView} />
+        <ChipRow items={MISSION_FILTERS} value={filter} onChange={setFilter} />
+
+        {view === "main" ? (
+          <div className="xpg-cards">
+            {filtered.map((m) => (
+              <ChallengeCard key={m.id} mission={m} onOpen={open} />
+            ))}
+            {filtered.length === 0 && (
+              <EmptyState title="لا مهام في هذا التصنيف" hint="جرّب تصنيفاً آخر، أو انشر مهمة جديدة من لوحة التحكم." />
+            )}
+          </div>
+        ) : (
+          <div className="xpg-cards">
+            {tasks.map((t) => (
+              <ObjectiveRow key={t.id} task={t} onOpen={open} />
+            ))}
+            {tasks.length === 0 && (
+              <EmptyState
+                title="لا توجد أهداف فرعية"
+                hint="الأهداف تأتي من حقل «الأهداف» في كل مهمة — أضفها عند إنشاء المهمة."
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
