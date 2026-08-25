@@ -330,7 +330,7 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
               <polygon
                 key={name}
                 points={shape.points.map(([x, y]) => `${x},${y}`).join(" ")}
-                fill={isHot || isActive ? "#cfe3b7" : count ? "#dfe7cc" : "#eaedde"}
+                fill={isHot  ? "#7491a8" : count ? "#1168af" : "#1168af"}
                 stroke="none"
                 style={{ cursor: "pointer", transition: "fill 180ms ease" }}
                 onMouseEnter={() => setHovered(name)}
@@ -342,7 +342,7 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
 
 
           {/* black district borders, drawn last so nothing paints over them */}
-          <g fill="none" stroke="#3b54f3" strokeLinejoin="round" strokeLinecap="round" pointerEvents="none">
+          <g fill="none" stroke="#fefefe" strokeLinejoin="round" strokeLinecap="round" pointerEvents="none">
             {NAMES.map((name) => {
               const isActive = activeNeighborhood === name;
               const isHot = hovered === name;
@@ -372,11 +372,10 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
                 pointerEvents="none"
                 style={{ fontFamily: "'Cairo','Almarai',sans-serif", fontWeight: 800 }}
                 fontSize={13 * u}
-                fill="#000000"
-                stroke="#f4f7ea"
+                fill="#fefefe"
                 strokeWidth={3.4 * u}
                 paintOrder="stroke"
-                opacity={emphasised ? 1 : 0.72}
+
               >
                 {name}
               </text>
