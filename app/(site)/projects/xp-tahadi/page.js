@@ -97,49 +97,7 @@ function DotField({ rows = 3, className = "" }) {
 
 /** Blue masthead with the governorate lockup and the yellow discs. */
 /** Blue masthead with the governorate lockup and the yellow discs. */
-function BrandBar() {
-  return (
-    <header dir="ltr" className="relative">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundColor: C.blue,
-          clipPath: "polygon(0 0, 100% 0, 100% 58%, 49% 58%, 43% 100%, 0 100%)",
-        }}
-      />
 
-      <div className="relative w-full px-3 sm:px-4 h-[104px] sm:h-[120px] flex items-start justify-between">
-        {/* four discs, sitting on the deeper left step */}
-        <div className="flex items-center gap-3 sm:gap-4 pt-9 sm:pt-11">
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className="block rounded-full w-9 h-9 sm:w-11 sm:h-11"
-              style={{ backgroundColor: C.yellow }}
-            />
-          ))}
-        </div>
-
-        {/* governorate lockup */}
-        <div dir="rtl" className="flex items-center gap-3 pt-4 sm:pt-5 text-white text-right">
-          <div className="leading-tight">
-            <p className="text-[11px] sm:text-sm font-bold">محافظة دمشق</p>
-            <p className="text-[11px] sm:text-sm font-bold">مديرية التنمية المحلية</p>
-            <p className="text-[8px] sm:text-[10px] tracking-wide text-white/80">
-              Local Development Directorate
-            </p>
-          </div>
-          <span
-            className="hidden sm:grid place-items-center w-11 h-11 rounded-full border-2 border-white/70 text-white text-lg font-black shrink-0"
-            aria-hidden="true"
-          >
-            ★
-          </span>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 /** 2×2 artwork grid. `dir` decides which corner counts as first. */
 function AssetGrid({ items, dir = "rtl" }) {
@@ -177,7 +135,6 @@ function MarketingContent({ signup = false, apply = null }) {
       />
 
       <div className="relative">
-        <BrandBar />
 
         {/* ---------- hero ---------- */}
         <section className="w-full px-3 sm:px-4 pt-6 pb-3 md:pt-10">
