@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
@@ -7,7 +6,6 @@ import Project from "@/models/Project";
 import Mission from "@/models/Mission";
 import User from "@/models/User";
 import Reveal from "@/app/components/ui/Reveal";
-import Button from "@/app/components/ui/Button";
 import ApplyPrompt from "./ApplyPrompt";
 import GameApp from "./GameApp";
 import RoleSwitcher from "./RoleSwitcher";
@@ -18,100 +16,243 @@ export const metadata = {
     "تحدي XP يكتشف ويدعم المواهب الريادية الشابة في محافظة دمشق من خلال مسار تدريبي مكثف يجمع بين التعليم العملي والإرشاد الفردي.",
 };
 
-const timeline = [
-  { step: "01", title: "التسجيل والفرز", desc: "تقديم الطلبات ومراجعة الأفكار الريادية الأولية من المتقدمين." },
-  { step: "02", title: "المسار التدريبي", desc: "ورشات عملية في بناء نماذج الأعمال والتسويق والتمويل، مع إرشاد فردي مباشر." },
-  { step: "03", title: "عرض المشاريع", desc: "تقديم الأفكار المطوَّرة أمام لجنة من الخبراء والمستثمرين." },
-  { step: "04", title: "التمويل والانطلاق", desc: "تمويل أفضل الأفكار وتحويلها إلى مشاريع فعلية على أرض الواقع." },
+/* ==================================================================
+   Brand palette, taken off the poster
+================================================================== */
+const C = {
+  blue: "#1168af",
+  blueDeep: "#0d5590",
+  yellow: "#f9c218",
+  red: "#e03c31",
+  green: "#4cAF50",
+};
+
+/* ------------------------------------------------------------------
+   Assets — all in /public.
+
+   Plain <img> rather than next/image: these are SVGs of unknown
+   intrinsic size, and Next's optimizer refuses SVG unless you set
+   dangerouslyAllowSVG in next.config.
+------------------------------------------------------------------- */
+const ASSETS = {
+  logo: "/Logo.svg",
+  map: "/MapImage.svg",
+  howItWorks: "/HowTheGameWorks.svg",
+  challenges: "/challanges.svg",
+};
+
+// Right-to-left in the poster: شارك top-right → اجمع xp bottom-left
+const HOW_STEPS = [
+  { src: "/share-1.svg", alt: "شارك" },
+  { src: "/chooseYourChallenge-2.svg", alt: "إختر تحديك" },
+  { src: "/compete-3.svg", alt: "نافس" },
+  { src: "/collectXP-4.svg", alt: "اجمع XP" },
 ];
 
-const highlights = [
-  { label: "مسار تدريبي", value: "8 أسابيع" },
-  { label: "مجال التركيز", value: "ريادة الأعمال" },
-  { label: "الفئة المستهدفة", value: "شباب دمشق" },
-  { label: "التمويل", value: "لأفضل الأفكار" },
+// Left-to-right in the poster: تبرع بقمامتك top-left → الطريق للجميع bottom-right
+const CHALLENGE_CARDS = [
+  { src: "/donate-1.svg", alt: "تبرع بقمامتك" },
+  { src: "/playgrounds-2.svg", alt: "ملاعبنا" },
+  { src: "/theirLaugh-3.svg", alt: "ضحكتهم علينا" },
+  { src: "/roadsForAll-4.svg", alt: "الطريق للجميع" },
 ];
 
-function MarketingContent() {
+/* ==================================================================
+   Decorative pieces from the poster
+================================================================== */
+
+/** The four-colour diagonal ribbon used as a section rule. */
+function StripeBar({ className = "", height = 11 }) {
   return (
-    <div className="bg-stone">
-      <section className="relative min-h-[70vh] flex items-end overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image src="/projects/xp-tahadi.jpg" alt="تحدي XP" fill className="object-cover" priority sizes="100vw" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/50 to-ink/20" />
-        </div>
-        <div className="pattern-khatam bg-[length:64px_64px] absolute inset-0 opacity-[0.1] mix-blend-overlay" />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12 pb-16 md:pb-24">
-          <span className="font-display text-gold-soft text-sm tracking-[0.3em]">تمكين اقتصادي وريادة أعمال</span>
-          <div className="w-16 h-[2px] bg-gold my-5" />
-          <h1 className="font-display text-5xl md:text-7xl text-white leading-tight">تحدي XP</h1>
-          <p className="mt-6 text-white/80 text-lg max-w-xl leading-loose">اكتشاف ودعم المواهب الريادية الشابة في محافظة دمشق</p>
-        </div>
-      </section>
+    <div
+      className={className}
+      aria-hidden="true"
+      style={{
+        height,
+        backgroundImage: `repeating-linear-gradient(115deg,
+          ${C.blue} 0 15px, #fff 15px 19px,
+          ${C.red} 19px 34px, #fff 34px 38px,
+          ${C.yellow} 38px 53px, #fff 53px 57px,
+          ${C.green} 57px 72px, #fff 72px 76px)`,
+      }}
+    />
+  );
+}
 
-      <section className="bg-teal-deep py-8">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4">
-          {highlights.map((h, i) => (
-            <div key={h.label} className={`text-center px-4 py-2 ${i !== highlights.length - 1 ? "md:border-e md:border-white/10" : ""}`}>
-              <p className="font-display text-gold-soft text-lg">{h.value}</p>
-              <p className="text-white/50 text-xs mt-1">{h.label}</p>
-            </div>
+/** Yellow dot field — three rows in the poster. */
+function DotField({ rows = 3, className = "" }) {
+  return (
+    <div
+      className={className}
+      aria-hidden="true"
+      style={{
+        height: rows * 26,
+        backgroundImage: `radial-gradient(circle, ${C.yellow} 4.5px, transparent 5px)`,
+        backgroundSize: "34px 26px",
+        backgroundPosition: "0 6px",
+      }}
+    />
+  );
+}
+
+/** Blue masthead with the governorate lockup and the yellow discs. */
+/** Blue masthead with the governorate lockup and the yellow discs. */
+function BrandBar() {
+  return (
+    <header dir="ltr" className="relative">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: C.blue,
+          clipPath: "polygon(0 0, 100% 0, 100% 58%, 49% 58%, 43% 100%, 0 100%)",
+        }}
+      />
+
+      <div className="relative w-full px-3 sm:px-4 h-[104px] sm:h-[120px] flex items-start justify-between">
+        {/* four discs, sitting on the deeper left step */}
+        <div className="flex items-center gap-3 sm:gap-4 pt-9 sm:pt-11">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className="block rounded-full w-9 h-9 sm:w-11 sm:h-11"
+              style={{ backgroundColor: C.yellow }}
+            />
           ))}
         </div>
-      </section>
 
-      <section className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-        <Reveal>
-          <span className="font-display text-gold text-sm tracking-[0.3em]">عن التحدي</span>
-          <div className="w-16 h-[2px] bg-gold my-5" />
-          <h2 className="font-display text-3xl text-ink mb-6">من فكرة إلى مشروع حقيقي</h2>
-          <p className="text-ink/70 leading-loose text-lg">
-            يهدف تحدي XP إلى اكتشاف ودعم المواهب الريادية الشابة في محافظة دمشق، من خلال مسار
-            تدريبي مكثف يجمع بين التعليم العملي والإرشاد الفردي وورشات بناء نماذج الأعمال، تتوّج
-            بعرض المشاريع أمام لجنة من الخبراء وتمويل أفضل الأفكار لتحويلها إلى مشاريع حقيقية على
-            أرض الواقع.
-          </p>
-        </Reveal>
-      </section>
-
-      <section className="bg-white/40 py-16 md:py-24">
-        <div className="max-w-5xl mx-auto px-6">
-          <Reveal className="text-center mb-14">
-            <span className="font-display text-gold text-sm tracking-[0.3em]">رحلة المتحدي</span>
-            <div className="w-16 h-[2px] bg-gold my-4 mx-auto" />
-            <h2 className="font-display text-3xl text-ink">مراحل التحدي</h2>
-          </Reveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {timeline.map((t, i) => (
-              <Reveal key={t.step} delay={i * 100}>
-                <div className="p-6 h-full bg-stone border-t-2 border-gold">
-                  <span className="font-display text-4xl text-gold-soft">{t.step}</span>
-                  <h3 className="font-display text-lg text-ink mt-4 mb-2">{t.title}</h3>
-                  <p className="text-sm text-ink/60 leading-relaxed">{t.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+        {/* governorate lockup */}
+        <div dir="rtl" className="flex items-center gap-3 pt-4 sm:pt-5 text-white text-right">
+          <div className="leading-tight">
+            <p className="text-[11px] sm:text-sm font-bold">محافظة دمشق</p>
+            <p className="text-[11px] sm:text-sm font-bold">مديرية التنمية المحلية</p>
+            <p className="text-[8px] sm:text-[10px] tracking-wide text-white/80">
+              Local Development Directorate
+            </p>
           </div>
+          <span
+            className="hidden sm:grid place-items-center w-11 h-11 rounded-full border-2 border-white/70 text-white text-lg font-black shrink-0"
+            aria-hidden="true"
+          >
+            ★
+          </span>
         </div>
-      </section>
+      </div>
+    </header>
+  );
+}
 
-      <section className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-        <Reveal className="p-8 md:p-12 bg-teal-deep relative overflow-hidden text-center">
-          <div className="pattern-khatam bg-[length:64px_64px] absolute inset-0 opacity-[0.08]" />
-          <div className="relative">
-            <span className="font-display text-gold-soft text-sm tracking-[0.3em]">انضم إلى التحدي</span>
-            <div className="w-16 h-[2px] bg-gold my-5 mx-auto" />
-            <h3 className="font-display text-3xl text-white mb-4">هل لديك فكرة ريادية؟</h3>
-            <p className="text-white/70 mb-8 max-w-md mx-auto leading-loose">
-              سجّل الآن، أكمل ملفك الشخصي، وقدّم طلب انضمامك إلى تحدي XP مباشرة من لوحة التحكم.
-            </p>
-            <Button href="/signup?next=/dashboard/volunteer" variant="outlineLight">سجّل الآن</Button>
-            <p className="text-white/50 text-sm mt-5">
-              لديك حساب بالفعل؟ <Link href="/login" className="text-gold-soft hover:text-gold transition-colors">سجّل الدخول</Link>
-            </p>
-          </div>
+/** 2×2 artwork grid. `dir` decides which corner counts as first. */
+function AssetGrid({ items, dir = "rtl" }) {
+  return (
+    <div dir={dir} className="grid grid-cols-2 gap-2 sm:gap-3">
+      {items.map((item, i) => (
+        <Reveal key={item.src} delay={i * 80}>
+          <img src={item.src} alt={item.alt} className="w-full h-auto" loading="lazy" />
         </Reveal>
-      </section>
+      ))}
+    </div>
+  );
+}
+
+function SignupButton({ className = "" }) {
+  return (
+    <Link
+      href="/signup?next=/projects/xp-tahadi"
+      className={`inline-flex items-center justify-center px-9 py-3.5 text-base sm:text-lg font-extrabold
+                  rounded-xl shadow-[0_5px_0_rgba(0,0,0,0.18)] transition-transform duration-150
+                  hover:-translate-y-0.5 active:translate-y-[3px] active:shadow-none ${className}`}
+      style={{ backgroundColor: C.blue, color: C.yellow }}
+    >
+      إبدأ التحدي
+    </Link>
+  );
+}
+
+function MarketingContent({ signup = false, apply = null }) {
+  return (
+    <div className="relative bg-white overflow-x-clip">
+      <div
+        className="pattern-khatam bg-[length:120px_120px] absolute inset-0 opacity-[0.05] pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div className="relative">
+        <BrandBar />
+
+        {/* ---------- hero ---------- */}
+        <section className="w-full px-3 sm:px-4 pt-6 pb-3 md:pt-10">
+          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
+            <Reveal className="flex flex-col items-center md:items-start gap-5">
+              <img src={ASSETS.logo} alt="تحدي XP — العبها تنمية" className="w-full max-w-[360px] h-auto" />
+
+             
+
+              {signup && <SignupButton />}
+            </Reveal>
+
+            <Reveal delay={120}>
+              <img src={ASSETS.map} alt="اللعبة بدأت — خريطة أحياء دمشق" className="w-full h-auto" />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* dots under the logo, ribbon under the map */}
+        <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center pb-6 md:pb-10">
+          <DotField className="w-[230px] sm:w-[280px]" />
+          <StripeBar className="w-full md:w-[70%] md:ms-auto" />
+        </div>
+
+        {/* ---------- join / apply slot ---------- */}
+        {apply && <section id="apply" className="pb-6 px-3 sm:px-4">{apply}</section>}
+
+        {/* ---------- how the game works ---------- */}
+        <section className="w-full px-3 sm:px-4 pb-6">
+          <div dir="ltr" className="grid md:grid-cols-2 gap-4 lg:gap-6 items-center">
+            <Reveal>
+              <img src={ASSETS.howItWorks} alt="كيف تعمل اللعبة؟" className="w-full h-auto" loading="lazy" />
+            </Reveal>
+
+            <div className="md:ms-auto" style={{ width: "50%",margin: "auto" }}>
+              <AssetGrid items={HOW_STEPS} dir="rtl" />
+            </div>
+          </div>
+        </section>
+
+        {/* ribbon under the devices, dots under the cards */}
+        <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center py-6 md:py-10">
+          <StripeBar className="w-full" />
+          <DotField className="w-[230px] sm:w-[280px] md:ms-auto" />
+        </div>
+
+        {/* ---------- the challenges ---------- */}
+        <section className="w-full px-3 sm:px-4 pb-10 md:pb-14">
+          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
+            <div className="order-2 md:order-1" style={{ width: "50%",margin: "auto" }}>
+              <AssetGrid items={CHALLENGE_CARDS} dir="ltr" />
+            </div>
+
+            <Reveal className="order-1 md:order-2" >
+              <img src={ASSETS.challenges} alt="التحديات" className="w-full h-auto" loading="lazy" />
+            </Reveal>
+          </div>
+        </section>
+
+        {signup && (
+          <section className="pb-14 text-center px-3 sm:px-4">
+            <Reveal>
+              <SignupButton />
+              <p className="text-ink/50 text-sm mt-5">
+                لديك حساب بالفعل؟{" "}
+                <Link href="/login?next=/projects/xp-tahadi" className="font-bold hover:underline" style={{ color: C.blue }}>
+                  سجّل الدخول
+                </Link>
+              </p>
+            </Reveal>
+          </section>
+        )}
+
+        <StripeBar className="w-full" height={13} />
+      </div>
     </div>
   );
 }
@@ -129,12 +270,12 @@ export default async function XpTahadiPage({ searchParams }) {
     </Suspense>
   ) : null;
 
-  if (!session) return <MarketingContent />;
+  if (!session) return <MarketingContent signup />;
 
   if (viewAs === "guest") {
     return (
       <>
-        <MarketingContent />
+        <MarketingContent signup />
         {switcher}
       </>
     );
@@ -145,7 +286,7 @@ export default async function XpTahadiPage({ searchParams }) {
   if (!project) {
     return (
       <>
-        <MarketingContent />
+        <MarketingContent signup />
         {switcher}
       </>
     );
@@ -158,16 +299,18 @@ export default async function XpTahadiPage({ searchParams }) {
   // they explicitly ask to preview the "not accepted yet" state.
   const isMember =
     viewAs === "applicant" ? false :
-    viewAs === "contestant" || viewAs === "manager" ? true :
-    isAdmin ? true :
-    realIsMember;
+      viewAs === "contestant" || viewAs === "manager" ? true :
+        isAdmin ? true :
+          realIsMember;
 
   const preview = Boolean(viewAs);
 
+  // Signed in but not accepted yet: the same landing page, with the join
+  // card slotted in under the hero instead of the sign-up button.
   if (!isMember) {
     return (
       <>
-        <ApplyPrompt projectId={project._id.toString()} preview={preview} />
+        <MarketingContent apply={<ApplyPrompt projectId={project._id.toString()} preview={preview} />} />
         {switcher}
       </>
     );
@@ -196,7 +339,21 @@ export default async function XpTahadiPage({ searchParams }) {
   // Counts are aggregated on the server so the client never receives the
   // full applicant list of every mission — only the signed-in user's own
   // state plus the roster of people already accepted.
-  const missions = missionDocs.map((m) => {
+  // A volunteer only ever sees missions in the neighborhood on their profile.
+  // Site admins, the owner and project managers see everything they cover.
+  const canManageProject =
+    isAdmin ||
+    project.owner.toString() === session.uid ||
+    (project.admins || []).some((a) => a.toString() === session.uid);
+  const myNeighborhood = currentUser?.profile?.neighborhood || null;
+  // Ended missions leave the map for everyone — the game board shows what is
+  // live, the dashboard keeps the archive.
+  const liveDocs = missionDocs.filter((m) => !["ended", "closed"].includes(m.status));
+  const visibleDocs = canManageProject
+    ? liveDocs
+    : liveDocs.filter((m) => myNeighborhood && m.neighborhood === myNeighborhood);
+
+  const missions = visibleDocs.map((m) => {
     const applicants = m.applicants || [];
     const participation = m.participation || [];
     const mine = applicants.find((a) => a.user?.toString() === session.uid);
@@ -212,7 +369,8 @@ export default async function XpTahadiPage({ searchParams }) {
       neighborhood: m.neighborhood,
       googleMapsUrl: m.googleMapsUrl || null,
       xpReward: m.xpReward || 0,
-      status: m.status,
+      type: m.type || "main",
+      status: m.status === "open" ? "upcoming" : m.status,
       createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : null,
 
       applicantCount: applicants.length,
@@ -259,10 +417,8 @@ export default async function XpTahadiPage({ searchParams }) {
     preview,
     previewRole: viewAs,
     projectId: project._id.toString(),
-    canManage:
-      isAdmin ||
-      project.owner.toString() === session.uid ||
-      (project.admins || []).some((a) => a.toString() === session.uid),
+    scopeNeighborhood: canManageProject ? null : myNeighborhood,
+    canManage: canManageProject,
   };
 
   return (

@@ -55,14 +55,34 @@ export function categoryOf(mission) {
 }
 
 export function categoryStyle(mission) {
-  if (mission?.status === "closed") return CATEGORIES.locked;
+  if (statusOf(mission) === "ended") return CATEGORIES.locked;
   return CATEGORIES[categoryOf(mission)] || CATEGORIES.general;
 }
 
 /* ---------- mission state, straight from the model ---------- */
 
+export const MISSION_STATUS_LABELS = {
+  upcoming: "تبدأ قريباً",
+  active: "جارية الآن",
+  ended: "منتهية",
+};
+
+/** Legacy documents may still carry "open"/"closed". */
+export function statusOf(mission) {
+  const s = mission?.status;
+  if (s === "open") return "upcoming";
+  if (s === "closed") return "ended";
+  return s || "upcoming";
+}
+
+/** Applications are only open before a mission starts. */
+export function canJoinMission(mission) {
+  return statusOf(mission) === "upcoming" && (mission?.myStatus || "open") === "open";
+}
+
 export const STATUS_LABELS = {
-  closed: "مهمة مغلقة",
+  closed: "مهمة منتهية",
+  started: "بدأت — التقديم مغلق",
   completed: "أنجزتها",
   accepted: "أنت مشارك",
   pending: "طلبك قيد المراجعة",
@@ -73,8 +93,13 @@ export const STATUS_LABELS = {
 /** The single label a mission shows for the signed-in user. */
 export function myState(mission) {
   if (mission.myCompleted) return "completed";
-  if (mission.status === "closed") return "closed";
-  return mission.myStatus || "open";
+  const lifecycle = statusOf(mission);
+  if (lifecycle === "ended") return "closed";
+
+  const mine = mission.myStatus || "open";
+  if (mine !== "open") return mine;
+  // nothing applied for, and the mission is already under way
+  return lifecycle === "active" ? "started" : "open";
 }
 
 /** Progress = accepted applicants against everyone who applied.
@@ -85,7 +110,7 @@ export function missionProgress(mission) {
   const applied = mission.applicantCount || 0;
   const done = mission.completedCount || 0;
 
-  if (mission.status === "closed") {
+  if (statusOf(mission) === "ended") {
     return { joined, applied, done, percent: joined ? Math.round((done / joined) * 100) : 0, mode: "done" };
   }
   return { joined, applied, done, percent: applied ? Math.round((joined / applied) * 100) : 0, mode: "joined" };
@@ -217,6 +242,14 @@ export function achievementFeed(missions) {
   });
 
   return feed;
+}
+
+/* ---------- main vs side quests, from Mission.type ---------- */
+
+export const MISSION_TYPE_LABELS = { main: "مهمة رئيسية", side: "مهمة فرعية" };
+
+export function byType(missions, type) {
+  return missions.filter((m) => (m.type || "main") === type);
 }
 
 /* ---------- sub-tasks = the objectives you already store on missions ---------- */

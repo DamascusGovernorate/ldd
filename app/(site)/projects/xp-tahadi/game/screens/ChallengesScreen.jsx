@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useGame } from "../context";
-import { ChipRow, EmptyState, GameCard, GameHeader, IconTile, Pill, ProgressBar, SegmentedTabs, XPBadge } from "../ui";
+import { ChipRow, EmptyState, GameCard, GameHeader, IconTile, Pill, ProgressBar, SegmentedTabs } from "../ui";
 import { IconCheck } from "../icons";
-import { categoryStyle, missionProgress, myState, objectiveTasks, STATUS_LABELS } from "../lib";
+import { byType, categoryStyle, missionProgress, myState, STATUS_LABELS } from "../lib";
 
 const VIEWS = [
   { id: "main", label: "التحديات الرئيسية" },
@@ -95,37 +95,18 @@ function ChallengeCard({ mission, onOpen }) {
             ? `${done} أنجزوا من ${joined} مشارك`
             : `${joined} مقبول من ${applied} طلب · ${mission.neighborhood}`}
         </p>
-      </div>
-    </GameCard>
-  );
-}
 
-function ObjectiveRow({ task, onOpen }) {
-  const style = categoryStyle(task.mission);
-  return (
-    <GameCard
-      as="button"
-      onClick={() => onOpen(task.mission)}
-      className="xpg-press"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 11,
-        width: "100%",
-        padding: 11,
-        cursor: "pointer",
-        font: "inherit",
-        textAlign: "start",
-      }}
-    >
-      <MissionIcon mission={task.mission} size={48} />
-      <div style={{ flex: 1, minWidth: 0 }} dir="rtl">
-        <p style={{ margin: 0, fontSize: 14.5, fontWeight: 900 }}>{task.text}</p>
-        <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--xpg-muted)", fontWeight: 600 }}>
-          {task.mission.title} · {task.mission.neighborhood}
-        </p>
+        {mission.objectives?.length > 0 && (
+          <ul style={{ margin: "6px 0 0", padding: 0, listStyle: "none" }}>
+            {mission.objectives.slice(0, 2).map((o, i) => (
+              <li key={i} style={{ display: "flex", gap: 6, fontSize: 11.5, color: "var(--xpg-muted)", marginTop: 2 }}>
+                <span style={{ color: style.color, fontWeight: 900 }}>◆</span>
+                <span style={{ flex: 1 }}>{o}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <XPBadge amount={task.xp} color={style.color} />
     </GameCard>
   );
 }
@@ -142,7 +123,9 @@ export default function ChallengesScreen() {
     return missions;
   }, [missions, filter]);
 
-  const tasks = useMemo(() => objectiveTasks(filtered), [filtered]);
+  // "الرئيسية" and "الفرعية" now read Mission.type, set by the manager when
+  // the mission is published.
+  const visible = useMemo(() => byType(filtered, view === "main" ? "main" : "side"), [filtered, view]);
   const open = (mission) => push({ screen: "mission", id: mission.id });
 
   return (
@@ -153,27 +136,17 @@ export default function ChallengesScreen() {
         <SegmentedTabs items={VIEWS} value={view} onChange={setView} />
         <ChipRow items={MISSION_FILTERS} value={filter} onChange={setFilter} />
 
-        {view === "main" ? (
-          <div className="xpg-cards">
-            {filtered.map((m) => (
-              <ChallengeCard key={m.id} mission={m} onOpen={open} />
-            ))}
-            {filtered.length === 0 && (
-              <EmptyState title="لا مهام في هذا التصنيف" hint="جرّب تصنيفاً آخر، أو انشر مهمة جديدة من لوحة التحكم." />
-            )}
-          </div>
-        ) : (
-          <div className="xpg-cards">
-            {tasks.map((t) => (
-              <ObjectiveRow key={t.id} task={t} onOpen={open} />
-            ))}
-            {tasks.length === 0 && (
-              <EmptyState
-                title="لا توجد أهداف فرعية"
-                hint="الأهداف تأتي من حقل «الأهداف» في كل مهمة — أضفها عند إنشاء المهمة."
-              />
-            )}
-          </div>
+        <div className="xpg-cards">
+          {visible.map((m) => (
+            <ChallengeCard key={m.id} mission={m} onOpen={open} />
+          ))}
+        </div>
+
+        {visible.length === 0 && (
+          <EmptyState
+            title={view === "main" ? "لا توجد مهام رئيسية" : "لا توجد مهام فرعية"}
+            hint="تُنشر المهام من لوحة التحكم — تحدي XP."
+          />
         )}
       </div>
     </div>

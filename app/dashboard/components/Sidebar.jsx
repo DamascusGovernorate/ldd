@@ -7,22 +7,29 @@ import {
   IoBulbOutline, IoHeartOutline, IoFlagOutline, IoCheckmarkDoneOutline,
   IoBarChartOutline, IoNewspaperOutline, IoNotificationsOutline,
   IoWarningOutline, IoMenu, IoClose, IoChevronBack, IoChevronForward,
+  IoGameControllerOutline,
 } from "react-icons/io5";
 
+const ALL_ROLES = ["admin", "user", "news_reporter", "xp_project_manager"];
+
 const navItems = [
-  { name: "الرئيسية", href: "/dashboard", icon: IoHomeOutline, roles: ["admin", "user", "news_reporter"] },
-  { name: "حسابي", href: "/dashboard/account", icon: IoPersonOutline, roles: ["admin", "user", "news_reporter"] },
+  { name: "الرئيسية", href: "/dashboard", icon: IoHomeOutline, roles: ALL_ROLES },
+  { name: "حسابي", href: "/dashboard/account", icon: IoPersonOutline, roles: ALL_ROLES },
   { name: "المستخدمون", href: "/dashboard/users", icon: IoPeopleOutline, roles: ["admin"] },
   { name: "المشاريع", href: "/dashboard/projects", icon: IoBriefcaseOutline, roles: ["admin"] },
-  { name: "المبادرات", href: "/dashboard/initiatives", icon: IoBulbOutline, roles: ["admin", "user", "news_reporter"] },
-  { name: "التطوع", href: "/dashboard/volunteer", icon: IoHeartOutline, roles: ["admin", "user", "news_reporter"] },
-  { name: "المتطوعون", href: "/dashboard/volunteers", icon: IoPeopleOutline, roles: ["admin",  "news_reporter"] },
+  { name: "المبادرات", href: "/dashboard/initiatives", icon: IoBulbOutline, roles: ALL_ROLES },
+  { name: "التطوع", href: "/dashboard/volunteer", icon: IoHeartOutline, roles: ALL_ROLES },
+  { name: "المتطوعون", href: "/dashboard/volunteers", icon: IoPeopleOutline, roles: ["admin", "news_reporter"] },
   { name: "اللجنة التنموية", href: "/dashboard/development-committee", icon: IoFlagOutline, roles: ["admin", "news_reporter"] },
-  { name: "المهام", href: "/dashboard/tasks", icon: IoCheckmarkDoneOutline, roles: ["admin", "user", "news_reporter"] },
+  { name: "المهام", href: "/dashboard/tasks", icon: IoCheckmarkDoneOutline, roles: ALL_ROLES },
+  // The page itself decides between manager view, volunteer view, and a
+  // "you are not in the project yet" prompt — the sidebar is a client
+  // component and can't know project membership.
+  { name: "تحدي XP", href: "/dashboard/xp-challenge", icon: IoGameControllerOutline, roles: ALL_ROLES },
   { name: "التحليلات", href: "/dashboard/analytics", icon: IoBarChartOutline, roles: ["admin"] },
   { name: "الأخبار", href: "/dashboard/news", icon: IoNewspaperOutline, roles: ["admin", "news_reporter"] },
-  { name: "الإشعارات", href: "/dashboard/notifications", icon: IoNotificationsOutline, roles: ["admin", "user", "news_reporter"] },
-  { name: "التقارير", href: "/dashboard/reports", icon: IoWarningOutline, roles: ["admin", "user", "news_reporter"] },
+  { name: "الإشعارات", href: "/dashboard/notifications", icon: IoNotificationsOutline, roles: ALL_ROLES },
+  { name: "التقارير", href: "/dashboard/reports", icon: IoWarningOutline, roles: ALL_ROLES },
 ];
 
 const COLLAPSE_KEY = "ldd-sidebar-collapsed";
@@ -51,7 +58,7 @@ export default function Sidebar({ role }) {
   return (
     <>
       {/* Mobile trigger */}
-           <button
+      <button
         onClick={() => setMobileOpen(true)}
         className="md:hidden fixed top-3 start-3 z-[100] p-2 bg-white border border-ink/10 shadow"
         aria-label="فتح القائمة"

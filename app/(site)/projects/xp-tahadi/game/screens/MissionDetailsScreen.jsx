@@ -4,7 +4,7 @@ import { useGame } from "../context";
 import { AvatarStack, GameButton, GameCard, Pill, ProgressBar } from "../ui";
 import { ParkScene, PhotoThumb } from "../Illustrations";
 import { IconChevronStart, IconPinSmall, IconShare } from "../icons";
-import { categoryStyle, formatXP, missionProgress, myState, STATUS_LABELS } from "../lib";
+import { canJoinMission, categoryStyle, formatXP, missionProgress, MISSION_STATUS_LABELS, myState, statusOf, STATUS_LABELS } from "../lib";
 
 function InfoCell({ label, value, accent }) {
   return (
@@ -22,7 +22,8 @@ export default function MissionDetailsScreen({ mission }) {
   const style = categoryStyle(mission);
   const { joined, applied, done, percent, mode } = missionProgress(mission);
   const state = myState(mission);
-  const canJoin = state === "open" && mission.status === "open";
+  const lifecycle = statusOf(mission);
+  const canJoin = canJoinMission(mission);
 
   return (
     <div className="xpg-bluebg xpg-enter" style={{ minHeight: "100%", paddingBottom: 20 }}>
@@ -89,7 +90,7 @@ export default function MissionDetailsScreen({ mission }) {
         <GameCard style={{ padding: 14 }} dir="rtl">
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8, justifyContent: "space-between" }}>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, lineHeight: 1.35 }}>{mission.title}</h2>
-            <Pill color={style.color}>{mission.status === "closed" ? "منتهية" : "مفتوحة"}</Pill>
+            <Pill color={style.color}>{MISSION_STATUS_LABELS[lifecycle]}</Pill>
           </div>
 
           <p style={{ margin: "6px 0 0", fontSize: 12, fontWeight: 800, color: "var(--xpg-muted)" }}>

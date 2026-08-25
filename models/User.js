@@ -17,7 +17,14 @@ const UserSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    role: { type: String, enum: ["admin", "user", "news_reporter"], default: "user" },
+    // xp_project_manager grants the dashboard tab. Authority over a project
+    // still comes from Project.admins — the two are kept in sync by
+    // PATCH /api/projects/[id]/managers.
+    role: {
+      type: String,
+      enum: ["admin", "user", "news_reporter", "xp_project_manager"],
+      default: "user",
+    },
     emailVerified: { type: Boolean, default: false },
     xpPoints: { type: Number, default: 0 },
     profile: {

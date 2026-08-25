@@ -5,14 +5,15 @@ import { useGame } from "../context";
 import { AvatarStack, GameButton, IconTile, Pill, ProgressBar } from "../ui";
 import { PhotoThumb } from "../Illustrations";
 import { IconClose, IconPinSmall } from "../icons";
-import { categoryStyle, formatXP, missionProgress, myState, STATUS_LABELS } from "../lib";
+import { canJoinMission, categoryStyle, formatXP, missionProgress, MISSION_STATUS_LABELS, myState, statusOf, STATUS_LABELS } from "../lib";
 
 export default function MissionModal({ mission, onClose }) {
   const { joinMission, joining, push, shareMission } = useGame();
   const style = categoryStyle(mission);
   const { joined, applied, done, percent, mode } = missionProgress(mission);
   const state = myState(mission);
-  const canJoin = state === "open" && mission.status === "open";
+  const lifecycle = statusOf(mission);
+  const canJoin = canJoinMission(mission);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -76,7 +77,7 @@ export default function MissionModal({ mission, onClose }) {
           </h2>
 
           <div style={{ display: "flex", justifyContent: "center", marginTop: 7 }}>
-            <Pill color={style.color}>{mission.status === "closed" ? "مهمة منتهية" : "مهمة مفتوحة"}</Pill>
+            <Pill color={style.color}>{MISSION_STATUS_LABELS[lifecycle]}</Pill>
           </div>
 
           <div dir="ltr" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14 }}>
