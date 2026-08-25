@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Mission from "@/models/Mission";
 import { getXpContext, canTouchNeighborhood, normalizeStatus, isVisibleToVolunteers } from "@/lib/xpChallenge";
+import { getXpContext } from "@/lib/xpChallengeServer";
 
 export async function GET(req) {
   const session = await getSession();

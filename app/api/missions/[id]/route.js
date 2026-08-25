@@ -13,6 +13,7 @@ import {
   awardFor,
   EVALUATION_CRITERIA,
 } from "@/lib/xpChallenge";
+import { getXpContext } from "@/lib/xpChallengeServer";
 
 const STATUSES = ["upcoming", "active", "ended"];
 

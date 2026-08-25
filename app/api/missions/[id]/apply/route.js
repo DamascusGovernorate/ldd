@@ -4,7 +4,7 @@ import connectDB from "@/lib/db";
 import Mission from "@/models/Mission";
 import { notifyUser } from "@/lib/notify";
 import { getXpContext, canApplyTo, normalizeStatus } from "@/lib/xpChallenge";
-
+import { getXpContext } from "@/lib/xpChallengeServer";
 export async function POST(req, { params }) {
   const { id } = await params;
   const session = await getSession();
