@@ -204,7 +204,7 @@ function MarketingContent({ signup = false, apply = null }) {
         {/* ribbon under the devices, dots under the cards */}
         <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center py-6 md:py-10">
           <StripeBar className="w-full" />
-          <DotField className="w-[230px] sm:w-[280px] md:ms-auto" />
+          <DotField className="w-[230px] sm:w-[280px] md:ms-auto " />
         </div>
 
         {/* ---------- the challenges ---------- */}
@@ -214,7 +214,7 @@ function MarketingContent({ signup = false, apply = null }) {
               <AssetGrid items={CHALLENGE_CARDS} dir="ltr" />
             </div>
 
-            <Reveal className="order-1 md:order-2">
+            <Reveal className="order-1 md:order-2 ">
               <img src={ASSETS.challenges} alt="التحديات" className="w-1/2 h-auto m-auto" loading="lazy" />
             </Reveal>
           </div>
