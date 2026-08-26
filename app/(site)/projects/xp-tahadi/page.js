@@ -82,20 +82,26 @@ function StripeBar({ className = "", height = 11 }) {
   );
 }
 
-/** Solid navy bar with the white logo on the right, linking home. */
+/** Solid navy bar: challenge logo left, site logo right. */
 function PageNav() {
   return (
     <nav
       dir="ltr"
-      className="w-full h-16 flex items-center justify-end px-4 sm:px-6"
+      className="w-full h-26 flex items-center justify-between px-4 sm:px-6 "
       style={{ backgroundColor: C.navy }}
     >
+      <img
+        src={ASSETS.logo}
+        alt="تحدي XP — العبها تنمية"
+        className="h-46 w-auto z-10 mt-10"
+      />
+
       <Link
         href="/"
         aria-label="الصفحة الرئيسية"
         className="inline-flex items-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
       >
-        <img src={ASSETS.navLogo} alt="الصفحة الرئيسية" className="h-10 w-auto" />
+        <img src={ASSETS.navLogo} alt="الصفحة الرئيسية" className="h-16 w-auto" />
       </Link>
     </nav>
   );
@@ -161,28 +167,26 @@ function MarketingContent({ signup = false, apply = null }) {
 
         {/* ---------- hero ---------- */}
         <section className="w-full px-3 sm:px-4 pt-6 pb-3 md:pt-10">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
-            <Reveal className="flex flex-col items-center gap-5">
+          <div className="flex flex-col items-center gap-6">
+            <Reveal className="w-full">
               <img
-                src={ASSETS.logo}
-                alt="تحدي XP — العبها تنمية"
-                className="w-full max-w-[360px] h-auto"
-                style={{ margin: "auto" }}
+                src={ASSETS.map}
+                alt="اللعبة بدأت — خريطة أحياء دمشق"
+                className="w-full max-w-4xl h-auto mx-auto"
               />
-
-              {signup && <SignupButton />}
             </Reveal>
 
-            <Reveal delay={120}>
-              <img src={ASSETS.map} alt="اللعبة بدأت — خريطة أحياء دمشق" className="w-full h-auto" />
-            </Reveal>
+            {signup && (
+              <Reveal delay={120}>
+                <SignupButton />
+              </Reveal>
+            )}
           </div>
         </section>
 
         {/* dots under the logo, ribbon under the map */}
         <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center pb-6 md:pb-10">
-          <DotField className="w-[230px] sm:w-[280px]" />
-          <StripeBar className="w-full md:w-[70%] md:ms-auto" />
+
         </div>
 
         {/* ---------- join / apply slot ---------- */}
@@ -190,7 +194,7 @@ function MarketingContent({ signup = false, apply = null }) {
 
         {/* ---------- how the game works ---------- */}
         <section className="sm:w-full px-3 sm:px-4 pb-6">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-4 lg:gap-6">
+          <div dir="ltr" className="grid md:grid-cols-1 lg:w1/2 md:w-1/2 m-auto gap-4 lg:gap-6">
             <Reveal>
               <img src={ASSETS.howItWorks} alt="كيف تعمل اللعبة؟" className="w-1/2 h-auto m-auto" loading="lazy" />
             </Reveal>
@@ -203,20 +207,20 @@ function MarketingContent({ signup = false, apply = null }) {
 
         {/* ribbon under the devices, dots under the cards */}
         <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center py-6 md:py-10">
-          <StripeBar className="w-full" />
-          <DotField className="w-[230px] sm:w-[280px] md:ms-auto " />
+
         </div>
 
         {/* ---------- the challenges ---------- */}
-        <section className="w-full px-3 sm:px-4 pb-10 md:pb-14">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
-            <div className="order-2 md:order-1 w-full">
+        <section className="w-full px-3 sm:px-4 pb-10 md:pb-14 ">
+          <div dir="ltr" className="grid  md:grid-cols-1 lg:w1/2 md:w-1/2 m-auto gap-6 lg:gap-8 items-center">
+            <Reveal className=" ">
+              <img src={ASSETS.challenges} alt="التحديات" className="w-1/2 h-auto m-auto" loading="lazy" />
+            </Reveal>
+            <div className=" w-full">
               <AssetGrid items={CHALLENGE_CARDS} dir="ltr" />
             </div>
 
-            <Reveal className="order-1 md:order-2 ">
-              <img src={ASSETS.challenges} alt="التحديات" className="w-1/2 h-auto m-auto" loading="lazy" />
-            </Reveal>
+
           </div>
         </section>
 
@@ -238,7 +242,6 @@ function MarketingContent({ signup = false, apply = null }) {
           </section>
         )}
 
-        <StripeBar className="w-full" height={13} />
       </div>
     </div>
   );
