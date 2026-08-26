@@ -13,7 +13,10 @@ export async function PUT(req) {
   }
 
   await connectDB();
-  const completed = Boolean(mobilePhone && age && gender);
+  /* The neighborhood counts towards completion: without it the XP challenge
+     shows an empty map and refuses every mission application, so a profile
+     missing it isn't actually finished. */
+  const completed = Boolean(mobilePhone && age && gender && neighborhood);
 
   const user = await User.findByIdAndUpdate(
     session.uid,

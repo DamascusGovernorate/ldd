@@ -6,7 +6,6 @@ import Project from "@/models/Project";
 import Mission from "@/models/Mission";
 import User from "@/models/User";
 import Reveal from "@/app/components/ui/Reveal";
-import ApplyPrompt from "./ApplyPrompt";
 import GameApp from "./GameApp";
 import RoleSwitcher from "./RoleSwitcher";
 
@@ -150,7 +149,7 @@ function SignupButton({ className = "" }) {
   );
 }
 
-function MarketingContent({ signup = false, apply = null }) {
+function MarketingContent({ signup = false }) {
   return (
     <div className="relative bg-white overflow-x-clip">
       <div
@@ -188,9 +187,6 @@ function MarketingContent({ signup = false, apply = null }) {
         <div dir="ltr" className="w-full px-3 sm:px-4 grid md:grid-cols-2 gap-6 lg:gap-8 items-center pb-6 md:pb-10">
 
         </div>
-
-        {/* ---------- join / apply slot ---------- */}
-        {apply && <section id="apply" className="pb-6 px-3 sm:px-4">{apply}</section>}
 
         {/* ---------- how the game works ---------- */}
         <section className="sm:w-full px-3 sm:px-4 pb-6">
@@ -263,6 +259,7 @@ async function XpTahadiContent({ searchParams }) {
     </Suspense>
   ) : null;
 
+  // Signed out is now the only state that gets the landing page.
   if (!session) return <MarketingContent signup />;
 
   if (viewAs === "guest") {
@@ -285,28 +282,26 @@ async function XpTahadiContent({ searchParams }) {
     );
   }
 
-  const realIsMember = project.volunteers.some((v) => v.toString() === session.uid);
-
-  // Site admins always get the full game view by default (they can manage
-  // everything from the dashboard regardless of project membership) unless
-  // they explicitly ask to preview the "not accepted yet" state.
-  const isMember =
-    viewAs === "applicant" ? false :
-      viewAs === "contestant" || viewAs === "manager" ? true :
-        isAdmin ? true :
-          realIsMember;
-
   const preview = Boolean(viewAs);
 
-  // Signed in but not accepted yet: the same landing page, with the join
-  // card slotted in under the hero instead of the sign-up button.
-  if (!isMember) {
-    return (
-      <>
-        <MarketingContent apply={<ApplyPrompt projectId={project._id.toString()} preview={preview} />} />
-        {switcher}
-      </>
+  // A project manager is scoped to their own district; site admins and the
+  // owner see every mission in the project.
+  const canManageProject =
+    isAdmin ||
+    project.owner.toString() === session.uid ||
+    (project.admins || []).some((a) => a.toString() === session.uid);
+
+  /* There is no application step for the game itself — anyone with an
+     account takes part. Enrol them on first visit so the roster, the
+     leaderboard and the participant avatars have someone to count.
+     Managers stay out: they run the project, they don't compete in it. */
+  const enrolled = project.volunteers.some((v) => v.toString() === session.uid);
+  if (!enrolled && !canManageProject && !preview) {
+    await Project.updateOne(
+      { _id: project._id },
+      { $addToSet: { volunteers: session.uid } }
     );
+    project.volunteers = [...project.volunteers, session.uid];
   }
 
   const [missionDocs, volunteerDocs, currentUser] = await Promise.all([
@@ -315,7 +310,7 @@ async function XpTahadiContent({ searchParams }) {
       .select("fullName xpPoints profile.neighborhood profile.avatar")
       .sort({ xpPoints: -1 })
       .lean(),
-    User.findById(session.uid).select("fullName xpPoints profile.neighborhood profile.avatar").lean(),
+    User.findById(session.uid).select("fullName xpPoints profile").lean(),
   ]);
 
   const publicUser = (doc) => ({
@@ -329,16 +324,30 @@ async function XpTahadiContent({ searchParams }) {
   const users = volunteerDocs.map(publicUser);
   const byId = new Map(users.map((u) => [u.id, u]));
 
+  /* The account form now lives inside the game too, so the whole profile
+     travels with the page. Degrees are rebuilt by hand: lean() leaves an
+     ObjectId on every subdocument and those can't cross to the client. */
+  const p = currentUser?.profile || {};
+  const profile = {
+    mobilePhone: p.mobilePhone || "",
+    age: p.age || "",
+    gender: p.gender || "",
+    neighborhood: p.neighborhood || "",
+    degrees: (p.degrees || []).map((d) => ({
+      level: d.level || "",
+      specialization: d.specialization || "",
+    })),
+    certificateImage: p.certificateImage || "",
+    idImage: p.idImage || "",
+    completed: Boolean(p.completed),
+  };
+
   // Counts are aggregated on the server so the client never receives the
   // full applicant list of every mission — only the signed-in user's own
   // state plus the roster of people already accepted.
   // A volunteer only ever sees missions in the neighborhood on their profile.
   // Site admins, the owner and project managers see everything they cover.
-  const canManageProject =
-    isAdmin ||
-    project.owner.toString() === session.uid ||
-    (project.admins || []).some((a) => a.toString() === session.uid);
-  const myNeighborhood = currentUser?.profile?.neighborhood || null;
+  const myNeighborhood = p.neighborhood || null;
   // Ended missions leave the map for everyone — the game board shows what is
   // live, the dashboard keeps the archive.
   const liveDocs = missionDocs.filter((m) => !["ended", "closed"].includes(m.status));
@@ -350,7 +359,7 @@ async function XpTahadiContent({ searchParams }) {
     const applicants = m.applicants || [];
     const participation = m.participation || [];
     const mine = applicants.find((a) => a.user?.toString() === session.uid);
-    const myParticipation = participation.find((p) => p.user?.toString() === session.uid);
+    const myParticipation = participation.find((x) => x.user?.toString() === session.uid);
 
     return {
       id: m._id.toString(),
@@ -369,7 +378,7 @@ async function XpTahadiContent({ searchParams }) {
       applicantCount: applicants.length,
       acceptedCount: applicants.filter((a) => a.status === "accepted").length,
       pendingCount: applicants.filter((a) => a.status === "pending").length,
-      completedCount: participation.filter((p) => p.completed).length,
+      completedCount: participation.filter((x) => x.completed).length,
 
       participants: applicants
         .filter((a) => a.status === "accepted")
@@ -404,6 +413,7 @@ async function XpTahadiContent({ searchParams }) {
   const data = {
     currentUserId: session.uid,
     me: currentUser ? publicUser(currentUser) : null,
+    profile,
     missions,
     users,
     neighborhoods,

@@ -13,6 +13,9 @@ const H = MAP_VIEWBOX_HEIGHT || 762.5;
 const SHAPES = NEIGHBORHOOD_SHAPES || {};
 const NAMES = Object.keys(SHAPES);
 
+// How far a finger may wander before a tap counts as a pan.
+const DRAG_SLOP = 5;
+
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 /* Control glyphs are drawn inline on purpose: the map must never fail to
@@ -79,7 +82,7 @@ function MissionPin({ mission, leftPct, topPct, onSelect, draggedRef }) {
       title={`${mission.title} — ${mission.neighborhood}`}
       aria-label={mission.title}
     >
-      <svg viewBox="0 0 38 46" width="38" height="46" style={{ display: "block", marginTop: -8 }}>
+      <svg viewBox="0 0 38 46" width="38" height="46" style={{ display: "block", marginTop: -8, pointerEvents: "none" }}>
         <defs>
           <clipPath id={`pinclip-${mission.id}`}>
             <circle cx="19" cy="16.5" r="9.6" />
@@ -116,6 +119,7 @@ function MissionPin({ mission, leftPct, topPct, onSelect, draggedRef }) {
 export default function GameMap({ missions = [], onSelect, activeNeighborhood }) {
   const wrapRef = useRef(null);
   const pointers = useRef(new Map());
+  const captured = useRef(new Set());
   const pinchDist = useRef(null);
   const dragged = useRef(false);
 
@@ -212,11 +216,26 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
     return () => el.removeEventListener("wheel", onWheel);
   }, [zoomAt]);
 
-  const onPointerDown = (e) => {
+  /* Capture is deferred until the gesture is definitely a pan.
+
+     Capturing on pointerdown retargets the following click to this
+     container, so a pin's own onClick never fires and no mission opens.
+     By the time we capture here the gesture has already been marked as a
+     drag, and the pin ignores those anyway. */
+  const capturePointer = useCallback((e) => {
+    if (captured.current.has(e.pointerId)) return;
     wrapRef.current?.setPointerCapture?.(e.pointerId);
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    captured.current.add(e.pointerId);
+  }, []);
+
+  const onPointerDown = (e) => {
+    pointers.current.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY,
+      sx: e.clientX,
+      sy: e.clientY,
+    });
     dragged.current = false;
-    setPanning(true);
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
       pinchDist.current = Math.hypot(a.x - b.x, a.y - b.y);
@@ -241,6 +260,8 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
           zoomAt((a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top, ratio);
           pinchDist.current = dist;
           dragged.current = true;
+          setPanning(true);
+          capturePointer(e);
         }
       } else {
         pinchDist.current = dist;
@@ -248,9 +269,16 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
       return;
     }
 
+    // Below the slop threshold this is still a tap — don't pan, don't capture.
+    if (!dragged.current) {
+      if (Math.hypot(e.clientX - p.sx, e.clientY - p.sy) <= DRAG_SLOP) return;
+      dragged.current = true;
+      setPanning(true);
+      capturePointer(e);
+    }
+
     const dx = e.clientX - prevX;
     const dy = e.clientY - prevY;
-    if (Math.abs(dx) + Math.abs(dy) > 2) dragged.current = true;
 
     setCam((c) => {
       if (!c || !size.w) return c;
@@ -261,6 +289,9 @@ export default function GameMap({ missions = [], onSelect, activeNeighborhood })
 
   const endPointer = (e) => {
     pointers.current.delete(e.pointerId);
+    if (captured.current.delete(e.pointerId)) {
+      wrapRef.current?.releasePointerCapture?.(e.pointerId);
+    }
     if (pointers.current.size < 2) pinchDist.current = null;
     if (pointers.current.size === 0) setPanning(false);
   };

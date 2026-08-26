@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Mission from "@/models/Mission";
+import Project from "@/models/Project";
 import { notifyUser } from "@/lib/notify";
 import { canApplyTo, normalizeStatus } from "@/lib/xpChallenge";
 import { getXpContext } from "@/lib/xpChallengeServer";
+
 export async function POST(req, { params }) {
   const { id } = await params;
   const session = await getSession();
@@ -22,15 +24,23 @@ export async function POST(req, { params }) {
   const ctx = await getXpContext(session, { projectId: mission.project });
   if (!ctx) return NextResponse.json({ error: "المشروع غير موجود" }, { status: 404 });
 
-  if (!ctx.isVolunteer) {
-    return NextResponse.json({ error: "يجب أن تكون عضواً مقبولاً في المشروع أولاً" }, { status: 403 });
-  }
   if (!ctx.neighborhood) {
     return NextResponse.json({ error: "حدد حيّك في حسابك الشخصي قبل التقديم" }, { status: 400 });
   }
   // A volunteer only works in their own district.
   if (ctx.neighborhood !== mission.neighborhood) {
     return NextResponse.json({ error: "هذه المهمة في حي آخر" }, { status: 403 });
+  }
+
+  /* No application step for the project itself — having an account is
+     enough. Anyone applying to a mission who isn't on the roster yet joins
+     it here, which also covers people who arrive by a link rather than
+     through the project page. */
+  if (!ctx.isVolunteer) {
+    await Project.updateOne(
+      { _id: ctx.project._id },
+      { $addToSet: { volunteers: ctx.uid } }
+    );
   }
 
   const already = mission.applicants.find((a) => a.user.toString() === ctx.uid);

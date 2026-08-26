@@ -23,9 +23,21 @@ const PREVIEW_LABELS = {
   manager: "مسؤول مشروع",
 };
 
+const EMPTY_PROFILE = {
+  mobilePhone: "",
+  age: "",
+  gender: "",
+  neighborhood: "",
+  degrees: [],
+  certificateImage: "",
+  idImage: "",
+  completed: false,
+};
+
 export default function GameApp({
   currentUserId,
   me: meProp,
+  profile: profileProp,
   missions: initialMissions = [],
   users = [],
   neighborhoods = [],
@@ -54,6 +66,8 @@ export default function GameApp({
       fromList || { id: currentUserId, name: "لاعب", xpPoints: 0, neighborhood: null, avatar: null }
     );
   }, [meProp, users, currentUserId]);
+
+  const profile = profileProp || EMPTY_PROFILE;
 
   const stats = useMemo(() => playerStats(missions, users, me), [missions, users, me]);
 
@@ -148,6 +162,7 @@ export default function GameApp({
 
   const value = {
     me,
+    profile,
     stats,
     missions,
     users,
