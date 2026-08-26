@@ -25,6 +25,7 @@ const C = {
   yellow: "#f9c218",
   red: "#e03c31",
   green: "#4cAF50",
+  navy: "#09446c",
 };
 
 /* ------------------------------------------------------------------
@@ -39,6 +40,8 @@ const ASSETS = {
   map: "/MapImage.svg",
   howItWorks: "/HowTheGameWorks.svg",
   challenges: "/challanges.svg",
+  navLogo: "/logo-white.svg",
+  pattern: "/pattern.svg",
 };
 
 // Right-to-left in the poster: شارك top-right → اجمع xp bottom-left
@@ -79,6 +82,25 @@ function StripeBar({ className = "", height = 11 }) {
   );
 }
 
+/** Solid navy bar with the white logo on the right, linking home. */
+function PageNav() {
+  return (
+    <nav
+      dir="ltr"
+      className="w-full h-16 flex items-center justify-end px-4 sm:px-6"
+      style={{ backgroundColor: C.navy }}
+    >
+      <Link
+        href="/"
+        aria-label="الصفحة الرئيسية"
+        className="inline-flex items-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+      >
+        <img src={ASSETS.navLogo} alt="الصفحة الرئيسية" className="h-10 w-auto" />
+      </Link>
+    </nav>
+  );
+}
+
 /** Yellow dot field — three rows in the poster. */
 function DotField({ rows = 3, className = "" }) {
   return (
@@ -95,14 +117,10 @@ function DotField({ rows = 3, className = "" }) {
   );
 }
 
-/** Blue masthead with the governorate lockup and the yellow discs. */
-/** Blue masthead with the governorate lockup and the yellow discs. */
-
-
-/** 2×2 artwork grid. `dir` decides which corner counts as first. */
+/** Single-row artwork strip. `dir` decides which end counts as first. */
 function AssetGrid({ items, dir = "rtl" }) {
   return (
-    <div dir={dir} className="grid grid-cols-2 gap-2 sm:gap-3">
+    <div dir={dir} className="grid grid-cols-4 gap-2 sm:gap-3">
       {items.map((item, i) => (
         <Reveal key={item.src} delay={i * 80}>
           <img src={item.src} alt={item.alt} className="w-full h-auto" loading="lazy" />
@@ -130,21 +148,29 @@ function MarketingContent({ signup = false, apply = null }) {
   return (
     <div className="relative bg-white overflow-x-clip">
       <div
-        className="pattern-khatam bg-[length:120px_120px] absolute inset-0 opacity-[0.05] pointer-events-none"
+        className="absolute inset-0 opacity-[0.3] pointer-events-none"
         aria-hidden="true"
+        style={{
+          backgroundImage: `url(${ASSETS.pattern})`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "120px 120px",
+        }}
       />
 
       <div className="relative">
 
         {/* ---------- hero ---------- */}
         <section className="w-full px-3 sm:px-4 pt-6 pb-3 md:pt-10">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center" >
-            <Reveal className="flex flex-col items-center gap-5" >
-              <img src={ASSETS.logo} alt="تحدي XP — العبها تنمية" className="w-full max-w-[360px] h-auto" style={{ margin: "auto" }} />
+          <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
+            <Reveal className="flex flex-col items-center gap-5">
+              <img
+                src={ASSETS.logo}
+                alt="تحدي XP — العبها تنمية"
+                className="w-full max-w-[360px] h-auto"
+                style={{ margin: "auto" }}
+              />
 
-             
-
-              {signup && <SignupButton  />}
+              {signup && <SignupButton />}
             </Reveal>
 
             <Reveal delay={120}>
@@ -163,13 +189,13 @@ function MarketingContent({ signup = false, apply = null }) {
         {apply && <section id="apply" className="pb-6 px-3 sm:px-4">{apply}</section>}
 
         {/* ---------- how the game works ---------- */}
-        <section className="w-full px-3 sm:px-4 pb-6">
-          <div dir="ltr" className="grid md:grid-cols-2 gap-4 lg:gap-6 items-center">
+        <section className="sm:w-full px-3 sm:px-4 pb-6">
+          <div dir="ltr" className="grid md:grid-cols-2 gap-4 lg:gap-6">
             <Reveal>
-              <img src={ASSETS.howItWorks} alt="كيف تعمل اللعبة؟" className="w-full h-auto" loading="lazy" />
+              <img src={ASSETS.howItWorks} alt="كيف تعمل اللعبة؟" className="w-1/2 h-auto m-auto" loading="lazy" />
             </Reveal>
 
-            <div className="md:ms-auto" style={{ width: "50%",margin: "auto" }}>
+            <div className="w-full">
               <AssetGrid items={HOW_STEPS} dir="rtl" />
             </div>
           </div>
@@ -184,12 +210,12 @@ function MarketingContent({ signup = false, apply = null }) {
         {/* ---------- the challenges ---------- */}
         <section className="w-full px-3 sm:px-4 pb-10 md:pb-14">
           <div dir="ltr" className="grid md:grid-cols-2 gap-6 lg:gap-8 items-center">
-            <div className="order-2 md:order-1" style={{ width: "50%",margin: "auto" }}>
+            <div className="order-2 md:order-1 w-full">
               <AssetGrid items={CHALLENGE_CARDS} dir="ltr" />
             </div>
 
-            <Reveal className="order-1 md:order-2" >
-              <img src={ASSETS.challenges} alt="التحديات" className="w-full h-auto" loading="lazy" />
+            <Reveal className="order-1 md:order-2">
+              <img src={ASSETS.challenges} alt="التحديات" className="w-1/2 h-auto m-auto" loading="lazy" />
             </Reveal>
           </div>
         </section>
@@ -200,7 +226,11 @@ function MarketingContent({ signup = false, apply = null }) {
               <SignupButton />
               <p className="text-ink/50 text-sm mt-5">
                 لديك حساب بالفعل؟{" "}
-                <Link href="/login?next=/projects/xp-tahadi" className="font-bold hover:underline" style={{ color: C.blue }}>
+                <Link
+                  href="/login?next=/projects/xp-tahadi"
+                  className="font-bold hover:underline"
+                  style={{ color: C.blue }}
+                >
                   سجّل الدخول
                 </Link>
               </p>
@@ -214,7 +244,10 @@ function MarketingContent({ signup = false, apply = null }) {
   );
 }
 
-export default async function XpTahadiPage({ searchParams }) {
+/* ==================================================================
+   Page body — NOT exported. The default export below wraps it.
+================================================================== */
+async function XpTahadiContent({ searchParams }) {
   const session = await getSession();
   const params = await searchParams;
   const isAdmin = session?.role === "admin";
@@ -382,6 +415,18 @@ export default async function XpTahadiPage({ searchParams }) {
     <>
       <GameApp {...data} />
       {switcher}
+    </>
+  );
+}
+
+/* ==================================================================
+   The one and only default export — nav bar on top of every branch.
+================================================================== */
+export default async function XpTahadiPage(props) {
+  return (
+    <>
+      <PageNav />
+      <XpTahadiContent {...props} />
     </>
   );
 }

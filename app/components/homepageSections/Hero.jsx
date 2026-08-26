@@ -6,9 +6,12 @@ import logo from "@/public/logo.png";
 
 export default function Hero() {
   return (
+    <>                      <div className="h-[calc(7rem)]" />
     <section className="relative w-full min-h-[92vh] overflow-hidden flex items-end">
+      
       {/* Background photograph */}
       <div className="absolute inset-0 z-0">
+
         <Image
           src="/mainHero.jpg"
           alt="خلفية دمشق"
@@ -84,5 +87,7 @@ export default function Hero() {
         <span className="w-px h-10 bg-gradient-to-b from-gold-soft to-transparent" />
       </div>
     </section>
+    </>
+
   );
 }

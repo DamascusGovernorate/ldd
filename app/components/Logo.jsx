@@ -1,8 +1,15 @@
 // app/components/Logo.jsx
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const HIDE_ON = ["/projects/xp-tahadi"];
 
 export default function Logo() {
+  const pathname = usePathname();
+  if (HIDE_ON.some((p) => pathname.startsWith(p))) return null;
+
   return (
     <div className="w-full bg-white flex justify-center py-2">
       <Link

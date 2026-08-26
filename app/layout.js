@@ -77,7 +77,7 @@ export default function RootLayout({ children }) {
         </header>
 
         {/* Spacer to prevent content from hiding under the fixed header */}
-        <div className="h-[calc(7rem)]" />
+
 
         <Script
           id="structured-data"

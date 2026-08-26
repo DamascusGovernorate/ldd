@@ -65,7 +65,6 @@ export default function Footer() {
 
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/40">
           <p>© {new Date().getFullYear()} مديرية التنمية المحلية – محافظة دمشق. جميع الحقوق محفوظة.</p>
-          <p> <b>تصميم وتطوير <a href="https://www.hacker.sy" target="_blank" rel="noopener noreferrer">جعفر السبيني</a></b></p>
         </div>
       </div>
     </footer>
