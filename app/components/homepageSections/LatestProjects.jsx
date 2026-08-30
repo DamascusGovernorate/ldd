@@ -8,7 +8,7 @@ const STATUS_LABELS = { active: "قيد التنفيذ", completed: "مكتمل"
 
 // Projects that should link out to an external site instead of /projects/[slug]
 const EXTERNAL_LINKS = {
-  "6a857a732587a609c39e02ae": "https://xp-tahadi.leo2b-destination.workers.dev/",
+  "6a857a732587a609c39e02ae": "https://xp-tahadi.leo2b-destination.workers.dev/projects/xp-tahadi/",
 };
 
 export default async function LatestProjects() {
