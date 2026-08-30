@@ -4,7 +4,7 @@ import Logo from "./Logo";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
-const HIDDEN_CHROME_PATHS = ["/projects/xp-tahadi"];
+const HIDDEN_CHROME_PATHS = ["/projects/xp-tahadi", "/login"];
 
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
